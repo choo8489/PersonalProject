@@ -1,6 +1,7 @@
 import express from "express";
 import http from "http";
-import WebSocket from "ws";
+import SocketIO from "socket.io"
+import { setTimeout } from "timers/promises";
 
 const app = express();
 
@@ -14,24 +15,31 @@ const handleListen = () => console.log(`Listening on http://localhost:3000`);
 //app.listen(3000, handleListen);
 
 const server = http.createServer(app);
-const wss = new WebSocket.Server({server});
+const wsServer = SocketIO(server);
 
-const sockets = [];
-
-wss.on("connection", (socket) => { 
-    sockets.push(socket);
-    socket["nickname"] = "Anon";
-    socket.on("close", () => console.log("close")); 
-    socket.on("message", (msg) => {
-        const message = JSON.parse(msg);
-        switch(message.type) {
-            case "new_message":
-                sockets.forEach((aSocket) => aSocket.send(`${socket.nickname}: ${message.payload}`));
-            case "nickname":
-                socket["nickname"] = message.payload;
-        }        
+wsServer.on("connection", socket => {
+    socket.on("enter_room", (roomName, done) => {
+        socket.join(roomName);
+        done();
     });
-}); 
+})
+
+//const wss = new WebSocket.Server({server});
+// const sockets = [];
+// wss.on("connection", (socket) => { 
+//     sockets.push(socket);
+//     socket["nickname"] = "Anon";
+//     socket.on("close", () => console.log("close")); 
+//     socket.on("message", (msg) => {
+//         const message = JSON.parse(msg);
+//         switch(message.type) {
+//             case "new_message":
+//                 sockets.forEach((aSocket) => aSocket.send(`${socket.nickname}: ${message.payload}`));
+//             case "nickname":
+//                 socket["nickname"] = message.payload;
+//         }        
+//     });
+// }); 
 
 server.listen(3000, handleListen);
 

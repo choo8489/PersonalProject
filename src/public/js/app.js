@@ -1,53 +1,27 @@
-const messageList = document.querySelector("ul");
-const nickForm = document.querySelector("#nick");
-const messageForm = document.querySelector("#message");
-const socket = new WebSocket(`ws://${window.location.host}`);
+const socket = io();
 
-function makeMessage(type, payload) {
-    const msg = {type, payload};
-    return JSON.stringify(msg);
+const welcome = document.getElementById("welcome");
+const form = welcome.querySelector("form");
+const room = document.getElementById("room");
+room.hidden = true;
+
+let roomName;
+
+function showRoom() {
+    welcome.hidden = true;
+    room.hidden = false;
+
+    const h3 = room.querySelector("h3");
+    h3.innerText =`Room ${roomName}`;
 }
 
-socket.addEventListener("open", () => {
-    console.log("Connected to Server");
-});
-
-socket.addEventListener("message", (message) => {
-    const li = document.createElement("li");
-    li.innerText = message.data;
-    messageList.append(li);
-
-    // if (message.data instanceof Blob) {
-    //     reader = new FileReader();
-
-    //     reader.onload = () => {
-    //         const li = document.createElement("li");
-    //         li.innerText = reader.result;
-    //         messageList.append(li);
-    //     };
-
-    //     reader.readAsText(message.data);
-    // }
-});
-
-socket.addEventListener("close", () => {
-    console.log("Close");
-})
-
-messageForm.addEventListener("submit", (event) => {
+function handleRoomSubmit(event) {
     event.preventDefault();
-    const input = messageForm.querySelector("input");
-    socket.send(makeMessage("new_message", input.value));
+    const input = form.querySelector("input");
 
-    const li = document.createElement("li");
-    li.innerText = `You: ${message.data}`;
-    messageList.append(li);
+    socket.emit("enter_room", input.value, showRoom);
+    roomName = input.value;
+    input.value = ""
+}
 
-    input.value = "";
-}); 
-
-nickForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const input = nickForm.querySelector("input");
-    socket.send(makeMessage("nickname", input.value));
-}); 
+form.addEventListener("submit", handleRoomSubmit);
